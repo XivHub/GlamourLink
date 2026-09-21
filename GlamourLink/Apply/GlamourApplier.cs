@@ -79,7 +79,10 @@ public sealed class GlamourApplier
 
         foreach (var entry in plan.Entries)
         {
-            if (entry.Status is not (EntryStatus.Resolved or EntryStatus.Guessed or EntryStatus.Cleared))
+            entry.Apply = ApplyState.Pending;
+            entry.ApplyNote = "";
+
+            if (!entry.WillSend)
             {
                 continue;
             }
@@ -98,15 +101,16 @@ public sealed class GlamourApplier
             }
             else
             {
-                entry.Status = EntryStatus.Skipped;
-                Append(entry, "Glamourer has no slot for it.");
+                entry.Apply = ApplyState.Failed;
+                entry.ApplyNote = "Glamourer has no slot for it.";
+                failed++;
                 continue;
             }
 
             if (!sent)
             {
-                entry.Status = EntryStatus.Failed;
-                Append(entry, error);
+                entry.Apply = ApplyState.Failed;
+                entry.ApplyNote = error;
                 failed++;
                 continue;
             }
@@ -114,17 +118,17 @@ public sealed class GlamourApplier
             switch (ec)
             {
                 case GlamourerApiEc.Success:
-                    entry.Status = EntryStatus.Applied;
+                    entry.Apply = ApplyState.Applied;
                     applied++;
                     break;
                 case GlamourerApiEc.NothingDone:
-                    entry.Status = EntryStatus.Applied;
-                    Append(entry, $"Glamourer returned {ec}; the slot already looked like this.");
+                    entry.Apply = ApplyState.Applied;
+                    entry.ApplyNote = "The slot already looked like this.";
                     applied++;
                     break;
                 default:
-                    entry.Status = EntryStatus.Failed;
-                    Append(entry, $"Glamourer returned {ec}.");
+                    entry.Apply = ApplyState.Failed;
+                    entry.ApplyNote = $"Glamourer returned {ec}.";
                     failed++;
                     break;
             }
@@ -170,9 +174,6 @@ public sealed class GlamourApplier
     }
 
     private static string Slots(int count) => count == 1 ? "slot" : "slots";
-
-    private static void Append(PlanEntry entry, string note)
-        => entry.Note = entry.Note.Length == 0 ? note : $"{entry.Note} {note}";
 
     private readonly record struct ApplyStep(bool Ok, string Message, int Applied, int Failed, int ObjectIndex);
 

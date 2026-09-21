@@ -7,6 +7,7 @@ using GlamourLink.Game;
 
 namespace GlamourLink.Apply;
 
+/// <summary> What resolving the glamour against the game's sheets produced for one slot. </summary>
 public enum EntryStatus
 {
     Resolved,
@@ -14,6 +15,12 @@ public enum EntryStatus
     Cleared,
     Skipped,
     Unresolved,
+}
+
+/// <summary> What happened the last time this slot was sent to Glamourer. </summary>
+public enum ApplyState
+{
+    Pending,
     Applied,
     Failed,
 }
@@ -32,6 +39,11 @@ public sealed class PlanEntry
     public string DyeText { get; set; } = "-";
     public EntryStatus Status { get; set; }
     public string Note { get; set; } = "";
+    public ApplyState Apply { get; set; }
+    public string ApplyNote { get; set; } = "";
+
+    /// <summary> Whether this slot is one Glamourer should be asked to change. </summary>
+    public bool WillSend => Status is EntryStatus.Resolved or EntryStatus.Guessed or EntryStatus.Cleared;
 }
 
 /// <summary>
@@ -52,6 +64,12 @@ public sealed class GlamourPlan
     public int Cleared => Count(EntryStatus.Cleared);
     public int Skipped => Count(EntryStatus.Skipped);
     public int Unresolved => Count(EntryStatus.Unresolved);
+
+    /// <summary> Slots this plan would send, which stays true after an apply so it can be repeated. </summary>
+    public int Sendable => Entries.Count(e => e.WillSend);
+
+    public int Applied => Entries.Count(e => e.Apply == ApplyState.Applied);
+    public int Failed => Entries.Count(e => e.Apply == ApplyState.Failed);
 
     private int Count(EntryStatus status) => Entries.Count(e => e.Status == status);
 
