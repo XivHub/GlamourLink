@@ -67,6 +67,7 @@ public sealed class LibraryStore
         catch (Exception ex)
         {
             _log.Error(ex, $"Could not parse {Path}; loading an empty library.");
+            Plugin.Dev($"library parse threw {ex.GetType().Name}: {ex.Message}");
             BackupUnreadable();
             return;
         }
@@ -103,6 +104,7 @@ public sealed class LibraryStore
         catch (Exception ex)
         {
             _log.Error(ex, $"Could not move the unreadable library file at {Path}; leaving it in place.");
+            Plugin.Dev($"library backup threw {ex.GetType().Name}: {ex.Message}");
         }
     }
 
@@ -118,6 +120,7 @@ public sealed class LibraryStore
         catch (Exception ex)
         {
             _log.Error(ex, $"Could not save the outfit library to {Path}.");
+            Plugin.Dev($"library save threw {ex.GetType().Name}: {ex.Message}");
         }
     }
 

@@ -176,10 +176,12 @@ public sealed class ItemResolver
             catch (SheetNotFoundException ex)
             {
                 _log.Error(ex, "GlamourLink could not load the Item sheet; item resolution will be unavailable.");
+                Plugin.Dev($"item sheet threw {ex.GetType().Name}: {ex.Message}");
             }
             catch (Exception ex)
             {
                 _log.Error(ex, "GlamourLink failed to build the item index; item resolution will be unavailable.");
+                Plugin.Dev($"item index threw {ex.GetType().Name}: {ex.Message}");
             }
 
             _itemsBySlot = bySlot;
@@ -229,10 +231,12 @@ public sealed class ItemResolver
             catch (SheetNotFoundException ex)
             {
                 _log.Error(ex, "GlamourLink could not load the Glasses sheet; facewear resolution will be unavailable.");
+                Plugin.Dev($"glasses sheet threw {ex.GetType().Name}: {ex.Message}");
             }
             catch (Exception ex)
             {
                 _log.Error(ex, "GlamourLink failed to build the glasses index; facewear resolution will be unavailable.");
+                Plugin.Dev($"glasses index threw {ex.GetType().Name}: {ex.Message}");
             }
 
             _glassesCandidates = candidates;

@@ -88,10 +88,12 @@ public sealed class StainResolver
             catch (SheetNotFoundException ex)
             {
                 _log.Error(ex, "GlamourLink could not load the Stain sheet; dye resolution will be unavailable.");
+                Plugin.Dev($"stain sheet threw {ex.GetType().Name}: {ex.Message}");
             }
             catch (Exception ex)
             {
                 _log.Error(ex, "GlamourLink failed to build the stain index; dye resolution will be unavailable.");
+                Plugin.Dev($"stain index threw {ex.GetType().Name}: {ex.Message}");
             }
 
             _stainsByName = byName;

@@ -1,8 +1,10 @@
 using System;
+using System.Collections.Generic;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Ipc.Exceptions;
 using Dalamud.Plugin.Services;
 using Glamourer.Api.Enums;
+using Newtonsoft.Json.Linq;
 using Glamourer.Api.IpcSubscribers;
 
 namespace GlamourLink.Glamourer;
@@ -28,6 +30,7 @@ public sealed class GlamourerIpc
     private readonly SetItem _setItem;
     private readonly SetBonusItem _setBonusItem;
     private readonly GetStateBase64 _getStateBase64;
+    private readonly GetState _getState;
     private readonly AddDesign _addDesign;
 
     private readonly object _versionLock = new();
@@ -40,6 +43,7 @@ public sealed class GlamourerIpc
         _setItem = new SetItem(pluginInterface);
         _setBonusItem = new SetBonusItem(pluginInterface);
         _getStateBase64 = new GetStateBase64(pluginInterface);
+        _getState = new GetState(pluginInterface);
         _addDesign = new AddDesign(pluginInterface);
     }
 
@@ -121,7 +125,12 @@ public sealed class GlamourerIpc
         ec = GlamourerApiEc.UnknownError;
         try
         {
-            ec = _setItem.Invoke(objectIndex, slot, itemId, new byte[] { stain1, stain2 }, key: 0, flags: ApplyFlag.Once);
+            // A List<byte>, never a byte[]. Dalamud's CallGateChannel.CheckAndConvertArgs only walks
+            // an argument's base-type chain, and byte[]'s base type is Array, not IReadOnlyList<byte>,
+            // so it JSON round-trips the value. Newtonsoft writes a byte[] as a base64 string ("ZgA="),
+            // which will not deserialize back into IReadOnlyList<byte> and throws IpcTypeMismatchError.
+            // A List<byte> is written as [102,0] and survives the trip.
+            ec = _setItem.Invoke(objectIndex, slot, itemId, new List<byte> { stain1, stain2 }, key: 0, flags: ApplyFlag.Once);
             error = "";
             return true;
         }
@@ -233,9 +242,59 @@ public sealed class GlamourerIpc
         }
     }
 
+    /// <summary> Inner exceptions carry the real cause; an IPC type mismatch says nothing without them. </summary>
+    /// <summary>
+    /// The state as a JObject rather than Base64, because a design built from it has to have its
+    /// customize application turned off before it is saved; the Base64 form cannot be edited.
+    /// </summary>
+    public bool TryGetState(int objectIndex, out JObject? state, out string error)
+    {
+        state = null;
+        try
+        {
+            var (ec, data) = _getState.Invoke(objectIndex, key: 0);
+            if (ec != GlamourerApiEc.Success || data is null)
+            {
+                error = $"Glamourer would not hand over the character state ({ec}).";
+                return false;
+            }
+
+            state = data;
+            error = "";
+            return true;
+        }
+        catch (IpcNotReadyError)
+        {
+            error = $"This Glamourer version does not provide {GetState.Label}.";
+            return false;
+        }
+        catch (IpcError ex)
+        {
+            error = Generic(GetState.Label, ex);
+            return false;
+        }
+        catch (Exception ex)
+        {
+            error = Generic(GetState.Label, ex);
+            return false;
+        }
+    }
+
+    private static string Flatten(Exception ex)
+    {
+        var parts = new List<string>();
+        for (var e = ex; e is not null && parts.Count < 4; e = e.InnerException)
+        {
+            parts.Add(e.Message);
+        }
+
+        return string.Join(" <- ", parts);
+    }
+
     private string Generic(string label, Exception ex)
     {
         _log.Warning(ex, $"GlamourLink's {label} call failed.");
+        Plugin.Dev($"ipc {label} threw {ex.GetType().Name}: {Flatten(ex)}");
         return $"Glamourer's {label} call failed.";
     }
 

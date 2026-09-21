@@ -3,6 +3,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using Dalamud.Plugin.Services;
 using Glamourer.Api.Enums;
+using Newtonsoft.Json.Linq;
+using Newtonsoft.Json;
 using GlamourLink.Glamourer;
 
 namespace GlamourLink.Apply;
@@ -152,24 +154,53 @@ public sealed class GlamourApplier
 
     private SaveStep SaveOnFramework(int objectIndex, string designName)
     {
-        if (!_ipc.TryGetStateBase64(objectIndex, out var state, out var stateError) || state is null)
+        if (!_ipc.TryGetState(objectIndex, out var state, out var stateError) || state is null)
         {
             Plugin.Dev($"design save: state read failed: {stateError}");
             return new SaveStep(false, stateError, Guid.Empty);
         }
 
-        // Length is the cheap tell for whether the two-tick delay caught the applied look
-        // or the one before it; the same glamour twice should give the same number.
-        Plugin.Dev($"design save: state read, {state.Length} chars");
+        var disabled = KeepOnlyGear(state);
+        Plugin.Dev($"design save: state read, {disabled} non-gear application flags turned off");
 
         var name = string.IsNullOrWhiteSpace(designName) ? "GlamourLink import" : designName.Trim();
-        if (!_ipc.TryAddDesign(state, name, out var guid, out var addError))
+        if (!_ipc.TryAddDesign(state.ToString(Formatting.None), name, out var guid, out var addError))
         {
             return new SaveStep(false, addError, Guid.Empty);
         }
 
         Plugin.Dev($"design save: created \"{name}\" as {guid}");
         return new SaveStep(true, $"Saved as design \"{name}\".", guid);
+    }
+
+    /// <summary>
+    /// Turns off the application flags for everything that is not gear, so applying the saved
+    /// design changes the outfit and leaves the wearer alone. The values stay in the design, the
+    /// same as an unticked section in Glamourer's own editor; only the apply flags are cleared.
+    /// Glamourer omits a false "Apply" rather than writing it, so an absent flag is already off.
+    /// </summary>
+    private static int KeepOnlyGear(JObject state)
+    {
+        var cleared = 0;
+        foreach (var section in new[] { "Customize", "Parameters" })
+        {
+            if (state[section] is not JObject group)
+            {
+                continue;
+            }
+
+            foreach (var property in group.Properties())
+            {
+                if (property.Value is JObject entry && entry["Apply"] is { } apply && apply.Type == JTokenType.Boolean
+                    && apply.Value<bool>())
+                {
+                    entry["Apply"] = false;
+                    cleared++;
+                }
+            }
+        }
+
+        return cleared;
     }
 
     private static string Summarise(int applied, int failed)
