@@ -119,6 +119,11 @@ The build is clean, but the following can only be confirmed by playing:
 - A hand-corrupted `library.json` loads as an empty library, is renamed to
   `library.corrupt-<unix>.json`, and logs one error in `/xllog`.
 
+
 ## Licence
 
-MIT. See `LICENSE`.
+GlamourLink is licensed under the GNU Affero General Public License, version 3 or
+later; see [LICENSE](LICENSE). It links against Glamourer.Api, which is MIT.
+
+The icon is `images/icon.svg`; `images/icon.png` is rendered from it at 512 px, which
+is the copy the plugin installer fetches.
