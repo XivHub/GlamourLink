@@ -1,3 +1,4 @@
+using System;
 using System.Numerics;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Utility.Raii;
@@ -12,6 +13,7 @@ namespace GlamourLink.Windows;
 public sealed class MainWindow : Window
 {
     private readonly GlamourImporter _importer;
+    private readonly Action _openLibrary;
 
     private string _input = "";
     private bool _saveDesign;
@@ -19,9 +21,10 @@ public sealed class MainWindow : Window
     private string _saveMessage = "";
     private GlamourPlan? _boundPlan;
 
-    public MainWindow(GlamourImporter importer) : base("GlamourLink###glamourlink-main")
+    public MainWindow(GlamourImporter importer, Action openLibrary) : base("GlamourLink###glamourlink-main")
     {
         _importer = importer;
+        _openLibrary = openLibrary;
         _saveDesign = Plugin.Configuration.SaveAsDesignByDefault;
         Size = new Vector2(560, 520);
         SizeCondition = ImGuiCond.FirstUseEver;
@@ -78,6 +81,12 @@ public sealed class MainWindow : Window
         if (clicked || (submitted && !busy))
         {
             _importer.StartImport(_input);
+        }
+
+        ImGui.SameLine();
+        if (ImGui.Button("Library"))
+        {
+            _openLibrary();
         }
 
         if (busy)

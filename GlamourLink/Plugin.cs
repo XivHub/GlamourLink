@@ -39,6 +39,7 @@ public sealed class Plugin : IDalamudPlugin
 
     private readonly MainWindow _mainWindow;
     private readonly ConfigWindow _configWindow;
+    private readonly LibraryWindow _libraryWindow;
     private readonly EorzeaCollectionClient _eorzeaClient;
     private readonly GlamourImporter _importer;
 
@@ -56,14 +57,16 @@ public sealed class Plugin : IDalamudPlugin
             (msg, ex) => Log.Warning(ex, msg));
         HubStyle.Init(ThemeConfig);
 
-        _mainWindow = new MainWindow(_importer);
+        _mainWindow = new MainWindow(_importer, ToggleLibraryUi);
         _configWindow = new ConfigWindow();
+        _libraryWindow = new LibraryWindow(_importer);
         WindowSystem.AddWindow(_mainWindow);
         WindowSystem.AddWindow(_configWindow);
+        WindowSystem.AddWindow(_libraryWindow);
 
         CommandManager.AddHandler(CommandName, new CommandInfo(OnCommand)
         {
-            HelpMessage = "Open GlamourLink; \"/glink <url or id>\" imports directly, \"/glink config\" opens settings",
+            HelpMessage = "Open GlamourLink; \"/glink <url or id>\" imports, \"/glink library\" opens your outfits, \"/glink config\" opens settings",
         });
 
         PluginInterface.UiBuilder.Draw += DrawThemed;
@@ -95,7 +98,7 @@ public sealed class Plugin : IDalamudPlugin
     {
         // Dalamud calls this every frame whether or not a window is open, and the
         // theme pushes 78 style entries. Drawing nothing costs nothing.
-        if (!_mainWindow.IsOpen && !_configWindow.IsOpen)
+        if (!_mainWindow.IsOpen && !_configWindow.IsOpen && !_libraryWindow.IsOpen)
             return;
 
         HubStyle.Push();
@@ -114,6 +117,11 @@ public sealed class Plugin : IDalamudPlugin
         if (arg.Equals("config", StringComparison.OrdinalIgnoreCase))
         {
             ToggleConfigUi();
+            return;
+        }
+        if (arg.Equals("library", StringComparison.OrdinalIgnoreCase))
+        {
+            ToggleLibraryUi();
             return;
         }
         ImportFromCommand(arg);
@@ -145,4 +153,5 @@ public sealed class Plugin : IDalamudPlugin
 
     public void ToggleMainUi() => _mainWindow.Toggle();
     public void ToggleConfigUi() => _configWindow.Toggle();
+    public void ToggleLibraryUi() => _libraryWindow.Toggle();
 }
