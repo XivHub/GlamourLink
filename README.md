@@ -146,3 +146,16 @@ The log covers the things that can only be checked in game: fetch status, the re
 counts per import, every guessed or unresolved slot with both names, each slot's
 Glamourer return code, the character state length read back for a design save, the item
 index build time, and library saves.
+
+## Why the HTTP client is unusual
+
+Eorzea Collection sits behind a Cloudflare managed challenge that scores the TLS ClientHello
+and the HTTP/2 SETTINGS frame. Both are sent before any header exists, so no User-Agent or
+header set can satisfy it, and the HTML page is guarded more tightly than the JSON endpoint;
+scraping it is not an alternative.
+
+Measured against `/api/glamour/354779` from Windows: `SocketsHttpHandler`, .NET's default, is
+refused on HTTP/1.1 and on HTTP/2. `WinHttpHandler` is refused on HTTP/1.1 and served on
+HTTP/2. GlamourLink therefore uses `WinHttpHandler` and pins requests to HTTP/2.
+
+This is a property of someone else's bot protection, so it can stop working at any time.

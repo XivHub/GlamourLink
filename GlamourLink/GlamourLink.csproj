@@ -1,13 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Dalamud.NET.Sdk/15.0.0">
   <PropertyGroup>
-    <Version>0.2.1</Version>
+    <Version>0.2.2</Version>
     <PackageProjectUrl>https://github.com/XivHub/GlamourLink</PackageProjectUrl>
     <PackageLicenseExpression>AGPL-3.0-or-later</PackageLicenseExpression>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Glamourer.Api" Version="2.8.2" />
+    <!-- Eorzea Collection sits behind a Cloudflare managed challenge that scores the TLS
+         and HTTP/2 handshake. SocketsHttpHandler's handshake is refused; WinHttpHandler's,
+         over HTTP/2, is not. See EorzeaCollectionClient for the measurements. -->
+    <PackageReference Include="System.Net.Http.WinHttpHandler" Version="10.0.12" />
   </ItemGroup>
   <!-- Shared helpers compiled from source; see ~/dev/XivHubPluginKit/UI/THEME.md -->
   <ItemGroup>

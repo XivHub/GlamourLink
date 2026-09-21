@@ -4,6 +4,7 @@ using System.IO;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using Dalamud.Plugin.Services;
@@ -47,7 +48,19 @@ public sealed class EorzeaCollectionClient : IDisposable
         // Only what never changes lives here. The User-Agent is configurable
         // and is set per request in FetchAsync so a settings change takes
         // effect on the next fetch without rebuilding this client.
-        _http = new HttpClient { Timeout = Timeout.InfiniteTimeSpan };
+        // WinHttpHandler, not the default SocketsHttpHandler. Eorzea Collection sits behind a
+        // Cloudflare managed challenge that scores the TLS ClientHello and the HTTP/2 SETTINGS
+        // frame, both sent before any header exists, so no User-Agent or header set can satisfy
+        // it. Measured against /api/glamour/354779 on Windows: SocketsHttpHandler is refused on
+        // both HTTP/1.1 and HTTP/2, WinHttpHandler is refused on HTTP/1.1 and served on HTTP/2.
+        // That is why requests pin HttpVersion.Version20 in FetchAsync.
+        _http = new HttpClient(new WinHttpHandler
+        {
+            AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
+        })
+        {
+            Timeout = Timeout.InfiniteTimeSpan,
+        };
         _http.DefaultRequestHeaders.Accept.ParseAdd("application/json, text/plain, */*");
     }
 
@@ -63,7 +76,12 @@ public sealed class EorzeaCollectionClient : IDisposable
         }
 
         var url = $"{_cfg.ApiBaseUrl.TrimEnd('/')}/{id}";
-        using var request = new HttpRequestMessage(HttpMethod.Get, url);
+        using var request = new HttpRequestMessage(HttpMethod.Get, url)
+        {
+            // HTTP/1.1 is refused whatever the headers say; see the constructor.
+            Version = HttpVersion.Version20,
+            VersionPolicy = HttpVersionPolicy.RequestVersionOrHigher,
+        };
 
         if (string.IsNullOrEmpty(_cfg.UserAgent) || !TryParseUserAgent(request, _cfg.UserAgent))
         {
@@ -100,7 +118,7 @@ public sealed class EorzeaCollectionClient : IDisposable
                 {
                     404 => Result(FetchStatus.NotFound, null, $"Eorzea Collection has no glamour #{id}."),
                     403 => Result(FetchStatus.Refused, null,
-                        "Eorzea Collection refused the request (403). Its bot check may have changed; see the User-Agent setting."),
+                        "Eorzea Collection's bot check refused GlamourLink (403). Nothing you can set here will fix it; it needs a plugin update."),
                     429 => Result(FetchStatus.Refused, null,
                         "Eorzea Collection is rate limiting (429). Wait a minute and try again."),
                     503 => Result(FetchStatus.Refused, null,
