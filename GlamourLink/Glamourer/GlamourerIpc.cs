@@ -43,12 +43,46 @@ public sealed class GlamourerIpc
         _addDesign = new AddDesign(pluginInterface);
     }
 
+    private const int CheckCacheMs = 1000;
+
+    private long _checkedAt = -CheckCacheMs;
+    private GlamourerAvailability _cachedAvailability;
+    private string _cachedMessage = "";
+    private int _cachedMajor;
+    private int _cachedMinor;
+
     /// <summary>
-    /// Asks Glamourer for its API version. Nothing here is cached: Glamourer
-    /// can be loaded or unloaded at any point in a session, and the call is a
-    /// dictionary lookup plus a delegate invocation.
+    /// Asks Glamourer for its API version, reusing the answer for a second.
+    /// Callers include the draw loop, which asks once per control per frame;
+    /// Glamourer being loaded or unloaded is a thing a person does, so a
+    /// second-old answer is always current enough and an unload still lands
+    /// well before anyone can press a button. Framework thread only.
     /// </summary>
     public GlamourerAvailability Check(out string message, out int major, out int minor)
+    {
+        var now = Environment.TickCount64;
+        if (now - _checkedAt < CheckCacheMs)
+        {
+            message = _cachedMessage;
+            major = _cachedMajor;
+            minor = _cachedMinor;
+            return _cachedAvailability;
+        }
+
+        var result = Query(out message, out major, out minor);
+
+        _checkedAt = now;
+        _cachedMessage = message;
+        _cachedMajor = major;
+        _cachedMinor = minor;
+        _cachedAvailability = result;
+        return result;
+    }
+
+    /// <summary> Drops the cached answer so the next <see cref="Check"/> asks Glamourer again. </summary>
+    public void InvalidateCheck() => _checkedAt = 0;
+
+    private GlamourerAvailability Query(out string message, out int major, out int minor)
     {
         major = 0;
         minor = 0;

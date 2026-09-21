@@ -89,6 +89,11 @@ public sealed class Plugin : IDalamudPlugin
     /// </summary>
     private void DrawThemed()
     {
+        // Dalamud calls this every frame whether or not a window is open, and the
+        // theme pushes 78 style entries. Drawing nothing costs nothing.
+        if (!_mainWindow.IsOpen && !_configWindow.IsOpen)
+            return;
+
         HubStyle.Push();
         try { WindowSystem.Draw(); }
         finally { HubStyle.Pop(); }

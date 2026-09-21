@@ -65,6 +65,10 @@ public sealed class GlamourApplier
 
     private ApplyStep ApplyOnFramework(GlamourPlan plan)
     {
+        // The draw loop's cached answer can be a second old. An apply happens once
+        // per button press, so ask Glamourer directly rather than risk reporting a
+        // failure slot by slot when it was simply unloaded.
+        _ipc.InvalidateCheck();
         if (_ipc.Check(out var message, out _, out _) != GlamourerAvailability.Ready)
         {
             return new ApplyStep(false, message, 0, 0, 0);
