@@ -69,7 +69,9 @@ public sealed class GlamourApplier
         // per button press, so ask Glamourer directly rather than risk reporting a
         // failure slot by slot when it was simply unloaded.
         _ipc.InvalidateCheck();
-        if (_ipc.Check(out var message, out _, out _) != GlamourerAvailability.Ready)
+        var availability = _ipc.Check(out var message, out var major, out var minor);
+        Plugin.Dev($"apply: glamourer {availability} ({major}.{minor})");
+        if (availability != GlamourerAvailability.Ready)
         {
             return new ApplyStep(false, message, 0, 0, 0);
         }
@@ -118,9 +120,12 @@ public sealed class GlamourApplier
             {
                 entry.Apply = ApplyState.Failed;
                 entry.ApplyNote = error;
+                Plugin.Dev($"apply: {entry.Label} ipc failed: {error}");
                 failed++;
                 continue;
             }
+
+            Plugin.Dev($"apply: {entry.Label} item={entry.ItemId} stains={entry.Stain1}/{entry.Stain2} -> {ec}");
 
             switch (ec)
             {
@@ -141,6 +146,7 @@ public sealed class GlamourApplier
             }
         }
 
+        Plugin.Dev($"apply: object {objectIndex}, {applied} applied, {failed} failed");
         return new ApplyStep(applied > 0, Summarise(applied, failed), applied, failed, objectIndex);
     }
 
@@ -148,8 +154,13 @@ public sealed class GlamourApplier
     {
         if (!_ipc.TryGetStateBase64(objectIndex, out var state, out var stateError) || state is null)
         {
+            Plugin.Dev($"design save: state read failed: {stateError}");
             return new SaveStep(false, stateError, Guid.Empty);
         }
+
+        // Length is the cheap tell for whether the two-tick delay caught the applied look
+        // or the one before it; the same glamour twice should give the same number.
+        Plugin.Dev($"design save: state read, {state.Length} chars");
 
         var name = string.IsNullOrWhiteSpace(designName) ? "GlamourLink import" : designName.Trim();
         if (!_ipc.TryAddDesign(state, name, out var guid, out var addError))
@@ -157,6 +168,7 @@ public sealed class GlamourApplier
             return new SaveStep(false, addError, Guid.Empty);
         }
 
+        Plugin.Dev($"design save: created \"{name}\" as {guid}");
         return new SaveStep(true, $"Saved as design \"{name}\".", guid);
     }
 

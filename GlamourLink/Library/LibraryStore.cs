@@ -94,6 +94,7 @@ public sealed class LibraryStore
     private void BackupUnreadable()
     {
         var backup = $"{Path}.corrupt-{DateTimeOffset.UtcNow.ToUnixTimeSeconds()}.json";
+        Plugin.Dev($"library: unreadable, moving aside to {backup}");
         try
         {
             File.Move(Path, backup);
@@ -112,6 +113,7 @@ public sealed class LibraryStore
             var tmp = Path + ".tmp";
             File.WriteAllText(tmp, JsonSerializer.Serialize(_library, _json));
             File.Move(tmp, Path, overwrite: true);
+            Plugin.Dev($"library: saved {_library.Outfits.Count} outfits");
         }
         catch (Exception ex)
         {

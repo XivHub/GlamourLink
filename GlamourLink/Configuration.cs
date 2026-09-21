@@ -20,6 +20,15 @@ public class Configuration : IPluginConfiguration
     public bool ClearEmptyWeaponSlots { get; set; } = false;
     public bool SaveAsDesignByDefault { get; set; } = false;
 
+    /// <summary>
+    /// Dev-only live logging to a devlog server on the LAN. Off, and pointing nowhere,
+    /// on every normal install; the telemetry object is not even constructed until both
+    /// of these are set, so a user who never touches them pays nothing for the feature.
+    /// </summary>
+    public bool DevLog { get; set; } = false;
+
+    public string DevLogUrl { get; set; } = "";
+
     [NonSerialized]
     private IDalamudPluginInterface? pi;
 

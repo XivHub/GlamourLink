@@ -11,6 +11,7 @@ using GlamourLink.Apply;
 using GlamourLink.Eorzea;
 using GlamourLink.Library;
 using GlamourLink.Windows;
+using XivHubPluginKit;
 using XivHubPluginKit.UI;
 
 namespace GlamourLink;
@@ -35,6 +36,39 @@ public sealed class Plugin : IDalamudPlugin
     /// <summary>Shared across every XIV Hub plugin; see XivHubPluginKit/UI/THEME.md.</summary>
     public static HubThemeConfigService ThemeConfig { get; private set; } = null!;
 
+    private static DevTelemetry? _telemetry;
+
+    /// <summary>
+    /// Queue a dev-log line. A no-op on every normal install: the telemetry object
+    /// only exists while the toggle is on and a URL is set, so a shipped plugin runs
+    /// no timer and holds no HttpClient for this.
+    /// </summary>
+    public static void Dev(string line) => _telemetry?.Log(line);
+
+    /// <summary>
+    /// Creates or tears down the telemetry object to match the configuration. Called at
+    /// start and whenever the dev settings change, so turning the toggle off actually
+    /// stops the flush timer rather than leaving it spinning on an inactive instance.
+    /// </summary>
+    public static void RefreshTelemetry()
+    {
+        var wanted = Configuration.DevLog && !string.IsNullOrWhiteSpace(Configuration.DevLogUrl);
+
+        if (wanted && _telemetry is null)
+        {
+            _telemetry = new DevTelemetry(
+                "GlamourLink",
+                () => Configuration.DevLog,
+                () => Configuration.DevLogUrl,
+                err => Log.Debug($"Dev log post failed: {err}"));
+        }
+        else if (!wanted && _telemetry is not null)
+        {
+            _telemetry.Dispose();
+            _telemetry = null;
+        }
+    }
+
     public readonly WindowSystem WindowSystem = new("GlamourLink");
 
     private readonly MainWindow _mainWindow;
@@ -57,6 +91,9 @@ public sealed class Plugin : IDalamudPlugin
             (msg, ex) => Log.Warning(ex, msg));
         HubStyle.Init(ThemeConfig);
 
+        RefreshTelemetry();
+        Dev($"plugin loaded, {Library.Count} saved outfits");
+
         _mainWindow = new MainWindow(_importer, ToggleLibraryUi);
         _configWindow = new ConfigWindow();
         _libraryWindow = new LibraryWindow(_importer);
@@ -76,6 +113,9 @@ public sealed class Plugin : IDalamudPlugin
 
     public void Dispose()
     {
+        _telemetry?.Dispose();
+        _telemetry = null;
+
         CommandManager.RemoveHandler(CommandName);
 
         PluginInterface.UiBuilder.Draw -= DrawThemed;

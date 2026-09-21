@@ -187,12 +187,14 @@ public sealed class GlamourImporter : IDisposable
     {
         try
         {
+            Plugin.Dev($"import #{id}: fetching");
             var result = await _client.FetchAsync(id, ct).ConfigureAwait(false);
             if (ct.IsCancellationRequested)
             {
                 return;
             }
 
+            Plugin.Dev($"import #{id}: fetch {result.Status}");
             if (result.Status != FetchStatus.Ok || result.Glamour is null)
             {
                 if (result.Status != FetchStatus.Cancelled)
@@ -204,6 +206,7 @@ public sealed class GlamourImporter : IDisposable
             }
 
             var plan = GlamourPlan.Build(result.Glamour, _items, _stains, _cfg);
+            DevLogPlan($"import #{id}", plan);
             Error = null;
             Plan = plan;
         }
@@ -223,6 +226,7 @@ public sealed class GlamourImporter : IDisposable
     {
         try
         {
+            Plugin.Dev($"refetch #{ecId}: fetching");
             var result = await _client.FetchAsync(ecId, ct).ConfigureAwait(false);
             if (ct.IsCancellationRequested)
             {
@@ -239,7 +243,8 @@ public sealed class GlamourImporter : IDisposable
                 return;
             }
 
-            var plan = GlamourPlan.Build(result.Glamour, _items, _stains, _cfg);
+var plan = GlamourPlan.Build(result.Glamour, _items, _stains, _cfg);
+            DevLogPlan($"refetch #{ecId}", plan);
             Interlocked.Exchange(ref _refetch, new RefetchOutcome(ecId, plan, result.Message));
         }
         catch (Exception ex)
@@ -276,6 +281,23 @@ public sealed class GlamourImporter : IDisposable
         {
             BusyLabel = "";
             Volatile.Write(ref _busy, 0);
+        }
+    }
+
+    /// <summary> One line per plan, plus a line for each slot a user would need to look at. </summary>
+    private static void DevLogPlan(string tag, GlamourPlan plan)
+    {
+        Plugin.Dev($"{tag}: \"{plan.Name}\" by {plan.Character} ({plan.Server}); " +
+                   $"{plan.Resolved} resolved, {plan.Guessed} guessed, {plan.Cleared} cleared, " +
+                   $"{plan.Skipped} skipped, {plan.Unresolved} unresolved, {plan.Sendable} to send");
+
+        foreach (var entry in plan.Entries)
+        {
+            if (entry.Status is EntryStatus.Guessed or EntryStatus.Unresolved)
+            {
+                Plugin.Dev($"{tag}: {entry.Label} {entry.Status} \"{entry.RequestedName}\" -> " +
+                           $"\"{entry.ResolvedName}\" ({entry.Note})");
+            }
         }
     }
 

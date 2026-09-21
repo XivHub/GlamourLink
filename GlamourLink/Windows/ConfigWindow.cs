@@ -8,6 +8,8 @@ namespace GlamourLink.Windows;
 public sealed class ConfigWindow : Window
 {
     private string _apiBaseUrl;
+    private string _devLogUrl = "";
+
     private string _userAgent;
 
     public ConfigWindow() : base("GlamourLink Configuration###glamourlink-config")
@@ -16,12 +18,14 @@ public sealed class ConfigWindow : Window
         SizeCondition = ImGuiCond.FirstUseEver;
         _apiBaseUrl = Plugin.Configuration.ApiBaseUrl;
         _userAgent = Plugin.Configuration.UserAgent;
+        _devLogUrl = Plugin.Configuration.DevLogUrl;
     }
 
     public override void OnOpen()
     {
         _apiBaseUrl = Plugin.Configuration.ApiBaseUrl;
         _userAgent = Plugin.Configuration.UserAgent;
+        _devLogUrl = Plugin.Configuration.DevLogUrl;
     }
 
     public override void Draw()
@@ -39,6 +43,47 @@ public sealed class ConfigWindow : Window
         ImGui.Separator();
         ImGui.Spacing();
         DrawAppearanceSection();
+        ImGui.Spacing();
+        ImGui.Separator();
+        ImGui.Spacing();
+        DrawDeveloperSection();
+    }
+
+    /// <summary>
+    /// Live logging to a devlog server on the LAN, for working on GlamourLink itself.
+    /// Off and pointing nowhere unless someone fills both fields in, and the telemetry
+    /// object is only constructed while they are set, so a normal install runs no timer.
+    /// </summary>
+    private void DrawDeveloperSection()
+    {
+        var cfg = Plugin.Configuration;
+
+        if (!ImGui.CollapsingHeader("Developer"))
+        {
+            return;
+        }
+
+        ImGui.TextColored(HubStyle.Faint,
+            "For working on GlamourLink. Leave this alone unless you are running a devlog server.");
+
+        var devLog = cfg.DevLog;
+        if (ImGui.Checkbox("Send a dev log to my own server", ref devLog))
+        {
+            cfg.DevLog = devLog;
+            cfg.Save();
+            Plugin.RefreshTelemetry();
+        }
+
+        ImGui.TextUnformatted("Devlog URL");
+        ImGui.SetNextItemWidth(-1);
+        if (ImGui.InputText("##devlog-url", ref _devLogUrl, 512))
+        {
+            cfg.DevLogUrl = _devLogUrl;
+            cfg.Save();
+            Plugin.RefreshTelemetry();
+        }
+
+        ImGui.TextColored(HubStyle.Faint, "Example: http://192.168.88.248:9999/log");
     }
 
     private static void DrawImportSection()

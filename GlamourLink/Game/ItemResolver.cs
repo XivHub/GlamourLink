@@ -171,6 +171,7 @@ public sealed class ItemResolver
                 }
 
                 _log.Information($"GlamourLink built the item index: {rowCount} rows in {stopwatch.ElapsedMilliseconds} ms.");
+                Plugin.Dev($"item index: {rowCount} rows in {stopwatch.ElapsedMilliseconds} ms");
             }
             catch (SheetNotFoundException ex)
             {

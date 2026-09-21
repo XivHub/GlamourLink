@@ -127,3 +127,22 @@ later; see [LICENSE](LICENSE). It links against Glamourer.Api, which is MIT.
 
 The icon is `images/icon.svg`; `images/icon.png` is rendered from it at 512 px, which
 is the copy the plugin installer fetches.
+
+## Dev logging
+
+Settings has a `Developer` section that posts a live log to a devlog server on your own
+network, for working on GlamourLink itself. It is off by default and points nowhere; the
+telemetry object is not constructed until both the toggle and a URL are set, so a normal
+install runs no timer and opens no connection for it.
+
+Run the server from the plugin kit and point the plugin at it:
+
+    python3 ~/dev/XivHubPluginKit/devlog_server.py
+    tail -f ~/.cache/zhyra-devlog/live.log
+
+It listens on `0.0.0.0:9999` with no authentication, so keep it to a trusted network.
+
+The log covers the things that can only be checked in game: fetch status, the resolved
+counts per import, every guessed or unresolved slot with both names, each slot's
+Glamourer return code, the character state length read back for a design save, the item
+index build time, and library saves.
