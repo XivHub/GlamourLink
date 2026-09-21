@@ -1,6 +1,6 @@
 using Dalamud.Bindings.ImGui;
-using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
+using GlamourLink.Library;
 using XivHubPluginKit.UI;
 
 namespace GlamourLink.Windows;
@@ -34,7 +34,7 @@ public sealed class ConfigWindow : Window
         ImGui.Spacing();
         ImGui.Separator();
         ImGui.Spacing();
-        DrawRecentSection();
+        DrawLibrarySection();
         ImGui.Spacing();
         ImGui.Separator();
         ImGui.Spacing();
@@ -106,19 +106,12 @@ public sealed class ConfigWindow : Window
             "Eorzea Collection does not document this endpoint. If imports start failing, it changed.");
     }
 
-    private static void DrawRecentSection()
+    private static void DrawLibrarySection()
     {
-        ImGui.Text("Recent");
+        ImGui.Text("Library");
 
-        var cfg = Plugin.Configuration;
-        using (ImRaii.Disabled(cfg.Recents.Count == 0))
-        {
-            if (ImGui.Button("Forget all"))
-            {
-                cfg.Recents.Clear();
-                cfg.Save();
-            }
-        }
+        ImGui.TextColored(HubStyle.Faint, $"{Plugin.Library.Count} of {LibraryStore.MaxOutfits} outfits saved.");
+        ImGui.TextColored(HubStyle.Faint, Plugin.Library.Path);
     }
 
     private static void DrawAppearanceSection()

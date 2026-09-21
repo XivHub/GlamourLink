@@ -20,8 +20,6 @@ namespace GlamourLink.Apply;
 /// </summary>
 public sealed class GlamourImporter : IDisposable
 {
-    /// <summary>Recent-imports cap; a constant rather than a setting.</summary>
-    private const int RecentCap = 15;
     private static readonly TimeSpan MinFetchGap = TimeSpan.FromSeconds(2);
 
     private readonly Configuration _cfg;
@@ -108,31 +106,6 @@ public sealed class GlamourImporter : IDisposable
         _ = Task.Run(() => RunApplyAsync(plan, saveDesign, designName, cts.Token));
     }
 
-    /// <summary>
-    /// Removes any existing entry with the same id, inserts the new one at
-    /// index 0 and truncates to <see cref="RecentCap"/>, so the list reads
-    /// newest first with no separate sort step.
-    /// </summary>
-    public void RememberRecent(GlamourPlan plan)
-    {
-        var recents = _cfg.Recents;
-        recents.RemoveAll(r => r.Id == plan.Id);
-        recents.Insert(0, new Configuration.RecentImport
-        {
-            Id = plan.Id,
-            Name = plan.Name,
-            Character = plan.Character,
-            LastUsedUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
-        });
-
-        if (recents.Count > RecentCap)
-        {
-            recents.RemoveRange(RecentCap, recents.Count - RecentCap);
-        }
-
-        _cfg.Save();
-    }
-
     private CancellationTokenSource ReplaceCts()
     {
         _cts?.Cancel();
@@ -165,7 +138,6 @@ public sealed class GlamourImporter : IDisposable
             var plan = GlamourPlan.Build(result.Glamour, _items, _stains, _cfg);
             Error = null;
             Plan = plan;
-            RememberRecent(plan);
         }
         catch (Exception ex)
         {

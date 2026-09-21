@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using Dalamud.Configuration;
 using Dalamud.Plugin;
 
@@ -20,16 +19,6 @@ public class Configuration : IPluginConfiguration
     public bool ClearEmptyGearSlots { get; set; } = true;
     public bool ClearEmptyWeaponSlots { get; set; } = false;
     public bool SaveAsDesignByDefault { get; set; } = false;
-
-    public List<RecentImport> Recents { get; set; } = new();
-
-    public sealed class RecentImport
-    {
-        public int Id;
-        public string Name = "";
-        public string Character = "";
-        public long LastUsedUnix;
-    }
 
     [NonSerialized]
     private IDalamudPluginInterface? pi;

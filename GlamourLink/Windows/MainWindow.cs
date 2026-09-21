@@ -1,5 +1,4 @@
 using System;
-using System.Globalization;
 using System.Numerics;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Utility.Raii;
@@ -40,9 +39,6 @@ public sealed class MainWindow : Window
             ImGui.Spacing();
             DrawFooter(plan);
         }
-
-        ImGui.Spacing();
-        DrawRecentSection();
     }
 
     /// <summary>
@@ -245,49 +241,6 @@ public sealed class MainWindow : Window
         if (!string.IsNullOrEmpty(_importer.ApplyMessage))
         {
             ImGui.TextColored(plan.Failed == 0 ? HubStyle.Good : HubStyle.Bad, _importer.ApplyMessage);
-        }
-    }
-
-    private void DrawRecentSection()
-    {
-        if (!ImGui.CollapsingHeader("Recent"))
-        {
-            return;
-        }
-
-        var recents = Plugin.Configuration.Recents;
-        if (recents.Count == 0)
-        {
-            ImGui.TextColored(HubStyle.Faint, "Import a glamour and it will show up here.");
-            return;
-        }
-
-        Configuration.RecentImport? toRemove = null;
-
-        foreach (var recent in recents)
-        {
-            using var id = ImRaii.PushId(recent.Id);
-            var rowWidth = ImGui.GetContentRegionAvail().X;
-
-            if (ImGui.Selectable($"{recent.Name} — {recent.Character}"))
-            {
-                _importer.StartImport(recent.Id.ToString(CultureInfo.InvariantCulture));
-            }
-
-            ImGui.SameLine();
-            ImGui.TextColored(HubStyle.Info, $"#{recent.Id}");
-
-            ImGui.SameLine(rowWidth - 20f);
-            if (ImGui.SmallButton("x"))
-            {
-                toRemove = recent;
-            }
-        }
-
-        if (toRemove is not null)
-        {
-            recents.Remove(toRemove);
-            Plugin.Configuration.Save();
         }
     }
 }
