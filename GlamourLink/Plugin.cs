@@ -1,9 +1,13 @@
 using System;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Dalamud.Game.Command;
 using Dalamud.IoC;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
 using Dalamud.Interface.Windowing;
+using GlamourLink.Eorzea;
 using GlamourLink.Windows;
 using XivHubPluginKit.UI;
 
@@ -31,11 +35,14 @@ public sealed class Plugin : IDalamudPlugin
 
     private readonly MainWindow _mainWindow;
     private readonly ConfigWindow _configWindow;
+    private readonly EorzeaCollectionClient _eorzeaClient;
 
     public Plugin()
     {
         Configuration = PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
         Configuration.Initialize(PluginInterface);
+
+        _eorzeaClient = new EorzeaCollectionClient(Configuration, Log);
 
         ThemeConfig = new HubThemeConfigService(
             PluginInterface.GetPluginConfigDirectory(),
@@ -66,6 +73,8 @@ public sealed class Plugin : IDalamudPlugin
         PluginInterface.UiBuilder.OpenConfigUi -= ToggleConfigUi;
 
         WindowSystem.RemoveAllWindows();
+
+        _eorzeaClient.Dispose();
     }
 
     /// <summary>
@@ -99,7 +108,26 @@ public sealed class Plugin : IDalamudPlugin
 
     private void ImportFromCommand(string arg)
     {
-        ChatGui.PrintError("[GlamourLink] Glamour import is added in a later update.");
+        if (!EorzeaUrl.TryParseId(arg, out var id, out var error))
+        {
+            ChatGui.PrintError($"[GlamourLink] {error}");
+            return;
+        }
+
+        _ = Task.Run(async () =>
+        {
+            var result = await _eorzeaClient.FetchAsync(id, CancellationToken.None).ConfigureAwait(false);
+            if (result.Status == FetchStatus.Ok && result.Glamour is not null)
+            {
+                var glamour = result.Glamour;
+                var slotCount = glamour.Gear!.Enumerate().Count(e => e.Item is not null);
+                ChatGui.Print($"[GlamourLink] {glamour.Name} by {glamour.Character} — {slotCount} slots");
+            }
+            else
+            {
+                ChatGui.PrintError($"[GlamourLink] {result.Message}");
+            }
+        });
     }
 
     public void ToggleMainUi() => _mainWindow.Toggle();
