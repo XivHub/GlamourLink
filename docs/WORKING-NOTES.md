@@ -64,10 +64,42 @@ Check against `upstream/stable` in `~/dev/Glamourer`, not whatever branch the fo
 As of this writing `upstream/stable` and the fork point at the same `Glamourer.Api`
 commit, and nuget's newest `Glamourer.Api` is 2.8.2, so the three agree.
 
-## Still unverified in game
+## In-game verification checklist
 
-The full list is in the README. The one this session did not reach is the gear-only design
-save: tick "Save as a Glamourer design", then apply the resulting design to a character
-with a different face or body and confirm only the outfit changes.
+These can only be confirmed by playing:
 
-Designs created before 0.2.3 carry live customization flags and will change appearance.
+- A gear-only design save: tick "Save as a Glamourer design", then apply the
+  resulting design to a character with a different face or body and confirm
+  only the outfit changes. Designs created before 0.2.3 carry live
+  customization flags and will change appearance.
+- `SetItem` applies without opening the glamour dresser.
+- Both stains land correctly on a two-dye item.
+- `itemId 0` clears a slot as expected.
+- `SetBonusItem` applies glasses.
+- Facewear dye is unreachable through the IPC as read from source.
+- A weapon or off-hand of a different job's type shows only in GPose, as
+  Glamourer's own rule predicts.
+- `GetStateBase64`, called two ticks after apply, captures the applied look,
+  and `AddDesign` creates the named design from it.
+- `ApplyFlag.Once` survives a zone change or a redraw as expected.
+- Building the item index off the framework thread neither hitches the game
+  nor trips a Lumina thread-safety assertion.
+- The first import's index build time, as logged at `Log.Information`, is
+  short enough not to be noticeable.
+- The library file appears at the documented path after the first save and
+  parses as JSON with slot names written as strings.
+- Applying a saved outfit works with the base URL in settings pointed at an
+  unroutable host, proving the apply path makes no network call.
+- Refetching an outfit updates its gear while keeping its name, tags,
+  favourite and note.
+- Deleting an outfit while its refetch is in flight does not bring the
+  outfit back once the refetch completes.
+- A delete survives a game restart.
+- With all three GlamourLink windows closed, `/xlstats` shows no per-frame
+  draw cost for the plugin.
+- The save button is disabled once the library holds 500 outfits.
+- A crash or kill between the temp-file write and the rename during a
+  library save leaves the previous `library.json` intact rather than a
+  truncated one.
+- A hand-corrupted `library.json` loads as an empty library, is renamed to
+  `library.corrupt-<unix>.json`, and logs one error in `/xllog`.

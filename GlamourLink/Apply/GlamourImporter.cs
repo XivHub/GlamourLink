@@ -214,7 +214,7 @@ public sealed class GlamourImporter : IDisposable
         {
             _log.Error(ex, "GlamourLink import failed.");
             Plugin.Dev($"import threw {ex.GetType().Name}: {ex.Message}");
-            Error = "Something went wrong importing that glamour.";
+            Error = "That import failed; details are in /xllog.";
         }
         finally
         {
@@ -252,7 +252,7 @@ var plan = GlamourPlan.Build(result.Glamour, _items, _stains, _cfg);
         {
             _log.Error(ex, "GlamourLink refetch failed.");
             Plugin.Dev($"refetch threw {ex.GetType().Name}: {ex.Message}");
-            Interlocked.Exchange(ref _refetch, new RefetchOutcome(ecId, null, "Something went wrong refetching that glamour."));
+            Interlocked.Exchange(ref _refetch, new RefetchOutcome(ecId, null, "That refetch failed; details are in /xllog."));
         }
         finally
         {
@@ -278,7 +278,7 @@ var plan = GlamourPlan.Build(result.Glamour, _items, _stains, _cfg);
         {
             _log.Error(ex, "GlamourLink apply failed.");
             Plugin.Dev($"apply threw {ex.GetType().Name}: {ex.Message}");
-            ApplyMessage = "Something went wrong applying that glamour.";
+            ApplyMessage = "Applying failed; details are in /xllog.";
         }
         finally
         {

@@ -259,7 +259,7 @@ public sealed class LibraryWindow : Window
             {
                 if (Plugin.Library.Count == 0)
                 {
-                    ImGui.TextColored(HubStyle.Faint, "Fetch a glamour and press Save to library to put it here.");
+                    ImGui.TextColored(HubStyle.Faint, "Nothing saved yet. Fetch a glamour, then press Save to library.");
                 }
                 else if (_shown.Count == 0)
                 {
@@ -484,7 +484,7 @@ public sealed class LibraryWindow : Window
             : availability != GlamourerAvailability.Ready
                 ? glamourerMessage
                 : nothingToSend
-                    ? "Nothing in this outfit would be sent."
+                    ? "Nothing in this outfit can be applied."
                     : null;
 
         bool applyClicked;

@@ -132,7 +132,7 @@ public sealed class MainWindow : Window
             : availability != GlamourerAvailability.Ready
                 ? glamourerMessage
                 : nothingToSend
-                    ? "Nothing in this plan would be sent."
+                    ? "Nothing here can be applied."
                     : null;
 
         bool clicked;

@@ -207,7 +207,7 @@ public sealed class GlamourApplier
     {
         if (applied == 0 && failed == 0)
         {
-            return "Nothing in this plan could be applied.";
+            return "Nothing here could be applied.";
         }
 
         if (applied == 0)
