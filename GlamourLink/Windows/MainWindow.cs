@@ -1,10 +1,10 @@
-using System;
 using System.Numerics;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
 using GlamourLink.Apply;
 using GlamourLink.Glamourer;
+using GlamourLink.Library;
 using XivHubPluginKit.UI;
 
 namespace GlamourLink.Windows;
@@ -16,6 +16,7 @@ public sealed class MainWindow : Window
     private string _input = "";
     private bool _saveDesign;
     private string _designName = "";
+    private string _saveMessage = "";
     private GlamourPlan? _boundPlan;
 
     public MainWindow(GlamourImporter importer) : base("GlamourLink###glamourlink-main")
@@ -35,7 +36,7 @@ public sealed class MainWindow : Window
         {
             BindPlan(plan);
             ImGui.Spacing();
-            DrawPlanTable(plan);
+            PlanTable.Draw(plan);
             ImGui.Spacing();
             DrawFooter(plan);
         }
@@ -56,6 +57,7 @@ public sealed class MainWindow : Window
         _boundPlan = plan;
         _designName = plan.Name;
         _saveDesign = Plugin.Configuration.SaveAsDesignByDefault;
+        _saveMessage = "";
     }
 
     private void DrawImportSection()
@@ -96,101 +98,6 @@ public sealed class MainWindow : Window
         else
         {
             ImGui.TextColored(HubStyle.Bad, glamourerMessage);
-        }
-    }
-
-    private void DrawPlanTable(GlamourPlan plan)
-    {
-        ImGui.TextUnformatted($"{plan.Name} — {plan.Character} ({plan.Server})");
-        ImGui.SameLine();
-        ImGui.TextColored(HubStyle.Info, $"#{plan.Id}");
-
-        using var table = ImRaii.Table("glamourlink-plan", 4,
-            ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingStretchProp);
-        if (!table)
-        {
-            return;
-        }
-
-        ImGui.TableSetupColumn("Slot");
-        ImGui.TableSetupColumn("Item");
-        ImGui.TableSetupColumn("Dye");
-        ImGui.TableSetupColumn("Status");
-        ImGui.TableHeadersRow();
-
-        foreach (var entry in plan.Entries)
-        {
-            using var id = ImRaii.PushId((int)entry.Key);
-            ImGui.TableNextRow();
-
-            ImGui.TableNextColumn();
-            ImGui.TextColored(HubStyle.Faint, entry.Label);
-            DrawRowTooltip(entry);
-
-            ImGui.TableNextColumn();
-            ImGui.TextUnformatted(EntryItemText(entry));
-            DrawRowTooltip(entry);
-
-            ImGui.TableNextColumn();
-            ImGui.TextUnformatted(entry.DyeText);
-            DrawRowTooltip(entry);
-
-            ImGui.TableNextColumn();
-            DrawStatusCell(entry);
-            DrawRowTooltip(entry);
-        }
-    }
-
-    private static string EntryItemText(PlanEntry entry) => entry.Status switch
-    {
-        EntryStatus.Unresolved => entry.RequestedName ?? "",
-        EntryStatus.Skipped => entry.RequestedName ?? "-",
-        _ => entry.ResolvedName,
-    };
-
-    private static void DrawStatusCell(PlanEntry entry)
-    {
-        if (entry.Apply == ApplyState.Pending)
-        {
-            var color = entry.Status switch
-            {
-                EntryStatus.Resolved => HubStyle.Good,
-                EntryStatus.Guessed or EntryStatus.Cleared or EntryStatus.Skipped => HubStyle.Warn,
-                EntryStatus.Unresolved => HubStyle.Bad,
-                _ => HubStyle.Faint,
-            };
-            ImGui.TextColored(color, entry.Status.ToString());
-        }
-        else
-        {
-            var color = entry.Apply == ApplyState.Applied ? HubStyle.Good : HubStyle.Bad;
-            ImGui.TextColored(color, entry.Apply.ToString());
-        }
-    }
-
-    /// <summary>
-    /// Note plus ApplyNote on a second line, so a slot that resolved by a
-    /// guess still reads as a guess after it has been sent to Glamourer.
-    /// </summary>
-    private static void DrawRowTooltip(PlanEntry entry)
-    {
-        if (entry.Note.Length == 0 && entry.ApplyNote.Length == 0)
-        {
-            return;
-        }
-
-        if (!ImGui.IsItemHovered())
-        {
-            return;
-        }
-
-        if (entry.Note.Length > 0)
-        {
-            ImGui.SetTooltip(entry.ApplyNote.Length > 0 ? $"{entry.Note}\n{entry.ApplyNote}" : entry.Note);
-        }
-        else
-        {
-            ImGui.SetTooltip(entry.ApplyNote);
         }
     }
 
@@ -238,9 +145,37 @@ public sealed class MainWindow : Window
             _importer.StartApply(_saveDesign, _designName);
         }
 
-        if (!string.IsNullOrEmpty(_importer.ApplyMessage))
+        ImGui.SameLine();
+
+        var isNewToLibrary = Plugin.Library.Find(plan.Id) is null;
+        var saveLabel = isNewToLibrary ? "Save to library" : "Update in library";
+        var saveDisabled = isNewToLibrary && Plugin.Library.IsFull;
+
+        bool saveClicked;
+        using (ImRaii.Disabled(saveDisabled))
+        {
+            saveClicked = ImGui.Button(saveLabel);
+        }
+
+        if (saveDisabled && ImGui.IsItemHovered())
+        {
+            ImGui.SetTooltip($"Your library is full ({LibraryStore.MaxOutfits} outfits). Delete one to make room.");
+        }
+
+        if (saveClicked)
+        {
+            Plugin.Library.AddOrUpdateFromPlan(plan);
+            _saveMessage = isNewToLibrary ? "Saved to your library." : "Updated in your library.";
+        }
+
+        if (!string.IsNullOrEmpty(_importer.ApplyMessage) && ReferenceEquals(_importer.LastAppliedPlan, plan))
         {
             ImGui.TextColored(plan.Failed == 0 ? HubStyle.Good : HubStyle.Bad, _importer.ApplyMessage);
+        }
+
+        if (_saveMessage.Length > 0)
+        {
+            ImGui.TextColored(HubStyle.Good, _saveMessage);
         }
     }
 }
