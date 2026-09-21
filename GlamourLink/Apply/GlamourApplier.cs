@@ -27,7 +27,8 @@ public sealed class GlamourApplier
         _objectTable = objectTable;
     }
 
-    public async Task<ApplyOutcome> ApplyAsync(GlamourPlan plan, bool saveDesign, string designName, CancellationToken ct)
+    public async Task<ApplyOutcome> ApplyAsync(GlamourPlan plan, bool saveDesign, string designName, CancellationToken ct,
+        Action<string>? onStatusChange = null)
     {
         ApplyStep step;
         try
@@ -46,6 +47,8 @@ public sealed class GlamourApplier
 
         try
         {
+            onStatusChange?.Invoke("Saving design...");
+
             // Glamourer settles the frame's equipment changes before the state
             // is readable, so the save waits two ticks rather than reading back
             // inside the apply hop.

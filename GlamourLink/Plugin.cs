@@ -7,6 +7,7 @@ using Dalamud.IoC;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
 using Dalamud.Interface.Windowing;
+using GlamourLink.Apply;
 using GlamourLink.Eorzea;
 using GlamourLink.Windows;
 using XivHubPluginKit.UI;
@@ -36,6 +37,7 @@ public sealed class Plugin : IDalamudPlugin
     private readonly MainWindow _mainWindow;
     private readonly ConfigWindow _configWindow;
     private readonly EorzeaCollectionClient _eorzeaClient;
+    private readonly GlamourImporter _importer;
 
     public Plugin()
     {
@@ -43,13 +45,14 @@ public sealed class Plugin : IDalamudPlugin
         Configuration.Initialize(PluginInterface);
 
         _eorzeaClient = new EorzeaCollectionClient(Configuration, Log);
+        _importer = new GlamourImporter(Configuration, DataManager, Log, PluginInterface, Framework, ObjectTable);
 
         ThemeConfig = new HubThemeConfigService(
             PluginInterface.GetPluginConfigDirectory(),
             (msg, ex) => Log.Warning(ex, msg));
         HubStyle.Init(ThemeConfig);
 
-        _mainWindow = new MainWindow();
+        _mainWindow = new MainWindow(_importer);
         _configWindow = new ConfigWindow();
         WindowSystem.AddWindow(_mainWindow);
         WindowSystem.AddWindow(_configWindow);
@@ -75,6 +78,7 @@ public sealed class Plugin : IDalamudPlugin
         WindowSystem.RemoveAllWindows();
 
         _eorzeaClient.Dispose();
+        _importer.Dispose();
     }
 
     /// <summary>
