@@ -9,6 +9,7 @@ using Dalamud.Plugin.Services;
 using Dalamud.Interface.Windowing;
 using GlamourLink.Apply;
 using GlamourLink.Eorzea;
+using GlamourLink.Library;
 using GlamourLink.Windows;
 using XivHubPluginKit.UI;
 
@@ -29,6 +30,8 @@ public sealed class Plugin : IDalamudPlugin
 
     public static Configuration Configuration { get; private set; } = null!;
 
+    public static LibraryStore Library { get; private set; } = null!;
+
     /// <summary>Shared across every XIV Hub plugin; see XivHubPluginKit/UI/THEME.md.</summary>
     public static HubThemeConfigService ThemeConfig { get; private set; } = null!;
 
@@ -43,6 +46,7 @@ public sealed class Plugin : IDalamudPlugin
     {
         Configuration = PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
         Configuration.Initialize(PluginInterface);
+        Library = new LibraryStore(PluginInterface.GetPluginConfigDirectory(), Log);
 
         _eorzeaClient = new EorzeaCollectionClient(Configuration, Log);
         _importer = new GlamourImporter(Configuration, DataManager, Log, PluginInterface, Framework, ObjectTable);
