@@ -1,0 +1,9 @@
+.vs/
+.idea/
+obj/
+bin/
+*.user
+*.suo
+publish.sh
+CLAUDE.md
+PLAN.md

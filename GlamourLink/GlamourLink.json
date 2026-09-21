@@ -1,0 +1,15 @@
+{
+  "Author": "zhyra",
+  "Name": "GlamourLink",
+  "InternalName": "GlamourLink",
+  "Punchline": "Apply an Eorzea Collection glamour to yourself through Glamourer.",
+  "Description": "Requires Glamourer. Paste an Eorzea Collection glamour URL or id and GlamourLink reads its gear list from Eorzea Collection's undocumented JSON endpoint, resolves it against the game's own item and dye sheets, and applies the result to your character through Glamourer's IPC. Unmatched items are reported rather than guessed silently, and every fuzzy-matched item is labelled as a guess. Optionally saves the result as a named Glamourer design. Open /glink in game to import.",
+  "RepoUrl": "https://github.com/edg-l/GlamourLink",
+  "ApplicableVersion": "any",
+  "Tags": [
+    "glamour",
+    "glamourer",
+    "eorzea collection",
+    "fashion"
+  ]
+}
