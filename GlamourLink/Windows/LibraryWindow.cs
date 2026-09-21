@@ -172,13 +172,13 @@ public sealed class LibraryWindow : Window
 
         foreach (var outfit in Plugin.Library.Outfits)
         {
-            var character = outfit.Character.Length == 0 ? "Unknown" : outfit.Character;
+            var character = outfit.DisplayCharacter;
             if (_distinct.Add($"c:{character}"))
             {
                 _characters.Add(character);
             }
 
-            var server = outfit.Server.Length == 0 ? "Unknown" : outfit.Server;
+            var server = outfit.DisplayServer;
             if (_distinct.Add($"s:{server}"))
             {
                 _servers.Add(server);
@@ -194,13 +194,13 @@ public sealed class LibraryWindow : Window
                 continue;
             }
 
-            var character = outfit.Character.Length == 0 ? "Unknown" : outfit.Character;
+            var character = outfit.DisplayCharacter;
             if (_character.Length > 0 && !character.Equals(_character, StringComparison.Ordinal))
             {
                 continue;
             }
 
-            var server = outfit.Server.Length == 0 ? "Unknown" : outfit.Server;
+            var server = outfit.DisplayServer;
             if (_server.Length > 0 && !server.Equals(_server, StringComparison.Ordinal))
             {
                 continue;
@@ -297,8 +297,8 @@ public sealed class LibraryWindow : Window
             _selected = outfit;
         }
 
-        var character = outfit.Character.Length == 0 ? "Unknown" : outfit.Character;
-        var server = outfit.Server.Length == 0 ? "Unknown" : outfit.Server;
+        var character = outfit.DisplayCharacter;
+        var server = outfit.DisplayServer;
         ImGui.TextColored(HubStyle.Faint, $"{character} · {server}");
 
         for (var i = 0; i < outfit.Tags.Count; i++)
@@ -383,7 +383,7 @@ public sealed class LibraryWindow : Window
         ImGui.TextColored(HubStyle.Info, $"#{selected.EcId}");
 
         var savedDate = DateTimeOffset.FromUnixTimeSeconds(selected.SavedAtUnix).LocalDateTime;
-        var line = $"{selected.Character} · {selected.Server} · saved {savedDate:yyyy-MM-dd}";
+        var line = $"{selected.DisplayCharacter} · {selected.DisplayServer} · saved {savedDate:yyyy-MM-dd}";
         if (selected.LastAppliedUnix > 0)
         {
             var appliedDate = DateTimeOffset.FromUnixTimeSeconds(selected.LastAppliedUnix).LocalDateTime;

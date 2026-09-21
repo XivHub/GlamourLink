@@ -48,6 +48,13 @@ public sealed class SavedOutfit
     [JsonIgnore]
     public bool HasWeapon => Slots.Any(s => SlotMap.IsWeapon(s.Key) && s.ItemId != 0);
 
+    /// <summary> The character and server as shown to the user; both are blank for a hand-edited file. </summary>
+    [JsonIgnore]
+    public string DisplayCharacter => Character.Length == 0 ? "Unknown" : Character;
+
+    [JsonIgnore]
+    public string DisplayServer => Server.Length == 0 ? "Unknown" : Server;
+
     public static SavedOutfit FromPlan(GlamourPlan plan)
     {
         var outfit = new SavedOutfit
