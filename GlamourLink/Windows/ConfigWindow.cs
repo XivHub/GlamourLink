@@ -63,8 +63,7 @@ public sealed class ConfigWindow : Window
             return;
         }
 
-        ImGui.TextColored(HubStyle.Faint,
-            "For working on GlamourLink. Leave this alone unless you are running a devlog server.");
+        HubText.Faint("For working on GlamourLink. Leave this alone unless you are running a devlog server.");
 
         var devLog = cfg.DevLog;
         if (ImGui.Checkbox("Send a dev log to my own server", ref devLog))
@@ -83,7 +82,7 @@ public sealed class ConfigWindow : Window
             Plugin.RefreshTelemetry();
         }
 
-        ImGui.TextColored(HubStyle.Faint, "Example: http://192.168.88.248:9999/log");
+        HubText.Faint("Example: http://192.168.88.248:9999/log");
     }
 
     private static void DrawImportSection()
@@ -98,7 +97,7 @@ public sealed class ConfigWindow : Window
             cfg.ClearEmptyGearSlots = clearGear;
             cfg.Save();
         }
-        ImGui.TextColored(HubStyle.Faint, "Armour and accessories only.");
+        HubText.Faint("Armour and accessories only.");
 
         var clearWeapon = cfg.ClearEmptyWeaponSlots;
         if (ImGui.Checkbox("Also clear an empty weapon slot", ref clearWeapon))
@@ -106,7 +105,7 @@ public sealed class ConfigWindow : Window
             cfg.ClearEmptyWeaponSlots = clearWeapon;
             cfg.Save();
         }
-        ImGui.TextColored(HubStyle.Faint, "Off by default so you are never unarmed.");
+        HubText.Faint("Off by default so you are never unarmed.");
 
         var saveByDefault = cfg.SaveAsDesignByDefault;
         if (ImGui.Checkbox("Save as a Glamourer design by default", ref saveByDefault))
@@ -147,22 +146,21 @@ public sealed class ConfigWindow : Window
             cfg.Save();
         }
 
-        ImGui.TextColored(HubStyle.Faint,
-            "Eorzea Collection does not document this endpoint. If imports start failing, it changed.");
+        HubText.Faint("Eorzea Collection does not document this endpoint. If imports start failing, it changed.");
     }
 
     private static void DrawLibrarySection()
     {
         ImGui.Text("Library");
 
-        ImGui.TextColored(HubStyle.Faint, $"{Plugin.Library.Count} of {LibraryStore.MaxOutfits} outfits saved.");
-        ImGui.TextColored(HubStyle.Faint, Plugin.Library.Path);
+        HubText.Faint($"{Plugin.Library.Count} of {LibraryStore.MaxOutfits} outfits saved.");
+        HubText.Faint(Plugin.Library.Path);
     }
 
     private static void DrawAppearanceSection()
     {
         ImGui.Text("Appearance");
-        ImGui.TextColored(HubStyle.Faint, "Shared with every XIV Hub plugin.");
+        HubText.Faint("Shared with every XIV Hub plugin.");
         ImGui.Spacing();
         HubThemeEditor.Draw(Plugin.ThemeConfig);
     }

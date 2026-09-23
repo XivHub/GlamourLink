@@ -16,7 +16,7 @@ internal static class PlanTable
     {
         ImGui.TextUnformatted($"{plan.Name} — {plan.Character} ({plan.Server})");
         ImGui.SameLine();
-        ImGui.TextColored(HubStyle.Info, $"#{plan.Id}");
+        HubText.Inline(HubStyle.Info, $"#{plan.Id}");
 
         using var table = ImRaii.Table("glamourlink-plan", 4,
             ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingStretchProp);
@@ -37,7 +37,7 @@ internal static class PlanTable
             ImGui.TableNextRow();
 
             ImGui.TableNextColumn();
-            ImGui.TextColored(HubStyle.Faint, entry.Label);
+            HubText.Faint(entry.Label);
             DrawRowTooltip(entry);
 
             ImGui.TableNextColumn();
@@ -72,12 +72,12 @@ internal static class PlanTable
                 EntryStatus.Unresolved => HubStyle.Bad,
                 _ => HubStyle.Faint,
             };
-            ImGui.TextColored(color, entry.Status.ToString());
+            HubText.Colored(color, entry.Status.ToString());
         }
         else
         {
             var color = entry.Apply == ApplyState.Applied ? HubStyle.Good : HubStyle.Bad;
-            ImGui.TextColored(color, entry.Apply.ToString());
+            HubText.Colored(color, entry.Apply.ToString());
         }
     }
 

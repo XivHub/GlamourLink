@@ -154,7 +154,7 @@ public sealed class LibraryWindow : Window
             _hasWeaponOnly = false;
         }
 
-        ImGui.TextColored(HubStyle.Faint, $"{_shown.Count} of {Plugin.Library.Count} outfits");
+        HubText.Faint($"{_shown.Count} of {Plugin.Library.Count} outfits");
     }
 
     /// <summary>
@@ -259,11 +259,11 @@ public sealed class LibraryWindow : Window
             {
                 if (Plugin.Library.Count == 0)
                 {
-                    ImGui.TextColored(HubStyle.Faint, "Nothing saved yet. Fetch a glamour, then press Save to library.");
+                    HubText.Faint("Nothing saved yet. Fetch a glamour, then press Save to library.");
                 }
                 else if (_shown.Count == 0)
                 {
-                    ImGui.TextColored(HubStyle.Faint, "No outfit matches those filters.");
+                    HubText.Faint("No outfit matches those filters.");
                 }
                 else
                 {
@@ -299,7 +299,7 @@ public sealed class LibraryWindow : Window
 
         var character = outfit.DisplayCharacter;
         var server = outfit.DisplayServer;
-        ImGui.TextColored(HubStyle.Faint, $"{character} · {server}");
+        HubText.Faint($"{character} · {server}");
 
         for (var i = 0; i < outfit.Tags.Count; i++)
         {
@@ -353,7 +353,7 @@ public sealed class LibraryWindow : Window
 
         if (_selected is null)
         {
-            ImGui.TextColored(HubStyle.Faint, "Pick an outfit on the left.");
+            HubText.Faint("Pick an outfit on the left.");
             return;
         }
 
@@ -380,7 +380,7 @@ public sealed class LibraryWindow : Window
         }
 
         ImGui.SameLine();
-        ImGui.TextColored(HubStyle.Info, $"#{selected.EcId}");
+        HubText.Inline(HubStyle.Info, $"#{selected.EcId}");
 
         var savedDate = DateTimeOffset.FromUnixTimeSeconds(selected.SavedAtUnix).LocalDateTime;
         var line = $"{selected.DisplayCharacter} · {selected.DisplayServer} · saved {savedDate:yyyy-MM-dd}";
@@ -390,7 +390,7 @@ public sealed class LibraryWindow : Window
             line += $" · last applied {appliedDate:yyyy-MM-dd}";
         }
 
-        ImGui.TextColored(HubStyle.Faint, line);
+        HubText.Faint(line);
     }
 
     private void DrawNoteAndTags()
@@ -527,15 +527,14 @@ public sealed class LibraryWindow : Window
 
         if (!string.IsNullOrEmpty(_importer.ApplyMessage) && ReferenceEquals(_importer.LastAppliedPlan, plan))
         {
-            ImGui.TextColored(plan.Failed == 0 ? HubStyle.Good : HubStyle.Bad, _importer.ApplyMessage);
+            HubText.Colored(plan.Failed == 0 ? HubStyle.Good : HubStyle.Bad, _importer.ApplyMessage);
         }
 
-        ImGui.TextColored(HubStyle.Faint,
-            "Refetch updates the character, server and gear. Your name, tags, favourite and note are kept.");
+        HubText.Faint("Refetch updates the character, server and gear. Your name, tags, favourite and note are kept.");
 
         if (_detailMessage.Length > 0)
         {
-            ImGui.TextColored(HubStyle.Bad, _detailMessage);
+            HubText.Bad(_detailMessage);
         }
     }
 

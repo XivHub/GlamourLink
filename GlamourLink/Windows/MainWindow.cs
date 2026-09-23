@@ -91,29 +91,28 @@ public sealed class MainWindow : Window
 
         if (busy)
         {
-            ImGui.TextColored(HubStyle.Faint, _importer.BusyLabel);
+            HubText.Faint(_importer.BusyLabel);
         }
 
         if (!string.IsNullOrEmpty(_importer.Error))
         {
-            ImGui.TextColored(HubStyle.Bad, _importer.Error);
+            HubText.Bad(_importer.Error);
         }
 
         var availability = _importer.GlamourerIpc.Check(out var glamourerMessage, out var major, out var minor);
         if (availability == GlamourerAvailability.Ready)
         {
-            ImGui.TextColored(HubStyle.Good, $"Glamourer {major}.{minor} is ready.");
+            HubText.Good($"Glamourer {major}.{minor} is ready.");
         }
         else
         {
-            ImGui.TextColored(HubStyle.Bad, glamourerMessage);
+            HubText.Bad(glamourerMessage);
         }
     }
 
     private void DrawFooter(GlamourPlan plan)
     {
-        ImGui.TextColored(HubStyle.Faint,
-            $"{plan.Resolved} resolved · {plan.Guessed} guessed · {plan.Cleared} cleared · {plan.Skipped} skipped · {plan.Unresolved} unresolved");
+        HubText.Faint($"{plan.Resolved} resolved · {plan.Guessed} guessed · {plan.Cleared} cleared · {plan.Skipped} skipped · {plan.Unresolved} unresolved");
 
         ImGui.Checkbox("Save as a Glamourer design", ref _saveDesign);
 
@@ -179,12 +178,12 @@ public sealed class MainWindow : Window
 
         if (!string.IsNullOrEmpty(_importer.ApplyMessage) && ReferenceEquals(_importer.LastAppliedPlan, plan))
         {
-            ImGui.TextColored(plan.Failed == 0 ? HubStyle.Good : HubStyle.Bad, _importer.ApplyMessage);
+            HubText.Colored(plan.Failed == 0 ? HubStyle.Good : HubStyle.Bad, _importer.ApplyMessage);
         }
 
         if (_saveMessage.Length > 0)
         {
-            ImGui.TextColored(HubStyle.Good, _saveMessage);
+            HubText.Good(_saveMessage);
         }
     }
 }
