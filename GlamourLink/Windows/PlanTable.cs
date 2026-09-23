@@ -18,17 +18,15 @@ internal static class PlanTable
         ImGui.SameLine();
         HubText.Inline(HubStyle.Info, $"#{plan.Id}");
 
-        using var table = ImRaii.Table("glamourlink-plan", 4,
-            ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingStretchProp);
-        if (!table)
+        if (!HubTable.Begin("glamourlink-plan", 4, extra: ImGuiTableFlags.Borders))
         {
             return;
         }
 
-        ImGui.TableSetupColumn("Slot");
-        ImGui.TableSetupColumn("Item");
-        ImGui.TableSetupColumn("Dye");
-        ImGui.TableSetupColumn("Status");
+        HubTable.Fit("Slot");
+        HubTable.Stretch("Item", 2);
+        HubTable.Stretch("Dye");
+        HubTable.Fit("Status");
         ImGui.TableHeadersRow();
 
         foreach (var entry in plan.Entries)
@@ -52,6 +50,8 @@ internal static class PlanTable
             DrawStatusCell(entry);
             DrawRowTooltip(entry);
         }
+
+        HubTable.End();
     }
 
     private static string EntryItemText(PlanEntry entry) => entry.Status switch
