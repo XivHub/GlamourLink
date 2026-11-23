@@ -60,65 +60,17 @@ https://plugins.xivhub.net/pluginmaster.json
 
 ## What it can't do
 
-- The Eorzea Collection endpoint is undocumented. GlamourLink reads it
-  because it is the only source of a glamour's gear list, not because it is a
-  published API. It can start returning errors or a different shape without
-  notice; if imports stop working, that is the likely cause. The base URL and
-  the User-Agent are both editable in settings if the site's own defenses
-  change.
-- Items are matched by name, since the site gives names, not item ids.
-  Most names match exactly. A hand-typed name that does not match any item
-  is reported as unresolved, not silently dropped, and a close-but-not-exact
-  name is applied as a labelled guess rather than skipped, since a wrong
-  guess is a one-click Glamourer revert. An occasional item will still fail
-  to resolve.
-- Fashion accessories are never applied. Glamourer has no slot for that
-  category.
-- Facewear dye is never applied. Glamourer's facewear IPC call takes no
-  stain, so there is nothing to send a dye through even when the source
-  glamour has one.
-- A weapon or off-hand from a different job's weapon type only shows in
-  GPose. This is how Glamourer itself handles a mismatched weapon type, not
-  a GlamourLink limitation; the slot table warns about it inline.
-- Character appearance (race, hair, face) is never touched, only equipment
-  and bonus items.
+- Eorzea Collection has no official API. If imports suddenly stop working, the site probably
+  changed, and an update will be needed.
+- Items are matched by name. A near match is applied and marked as a guess; anything that can't be
+  matched is listed so you can see it.
+- Fashion accessories and facewear dye can't be applied, because Glamourer doesn't support them.
+- A weapon from a different job only shows in GPose. That's how Glamourer works.
+- Only gear changes. Your race, hair and face are never touched.
 
 ## Licence
 
 GlamourLink is licensed under the GNU Affero General Public License, version 3 or
 later; see [LICENSE](LICENSE). It links against Glamourer.Api, which is MIT.
 
-The icon is `images/icon.svg`; `images/icon.png` is rendered from it at 512 px, which
-is the copy the plugin installer fetches.
-
-## Dev logging
-
-Settings has a `Developer` section that posts a live log to a devlog server on your own
-network, for working on GlamourLink itself. It is off by default and points nowhere; the
-telemetry object is not constructed until both the toggle and a URL are set, so a normal
-install runs no timer and opens no connection for it.
-
-Run the server from the plugin kit and point the plugin at it:
-
-    python3 ~/dev/XivHubPluginKit/devlog_server.py
-    tail -f ~/.cache/zhyra-devlog/live.log
-
-It listens on `0.0.0.0:9999` with no authentication, so keep it to a trusted network.
-
-The log covers the things that can only be checked in game: fetch status, the resolved
-counts per import, every guessed or unresolved slot with both names, each slot's
-Glamourer return code, the character state length read back for a design save, the item
-index build time, and library saves.
-
-## Why the HTTP client is unusual
-
-Eorzea Collection sits behind a Cloudflare managed challenge that scores the TLS ClientHello
-and the HTTP/2 SETTINGS frame. Both are sent before any header exists, so no User-Agent or
-header set can satisfy it, and the HTML page is guarded more tightly than the JSON endpoint;
-scraping it is not an alternative.
-
-Measured against `/api/glamour/354779` from Windows: `SocketsHttpHandler`, .NET's default, is
-refused on HTTP/1.1 and on HTTP/2. `WinHttpHandler` is refused on HTTP/1.1 and served on
-HTTP/2. GlamourLink therefore uses `WinHttpHandler` and pins requests to HTTP/2.
-
-This is a property of someone else's bot protection, so it can stop working at any time.
+Building from source and developer logging: see [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
